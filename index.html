@@ -1,166 +1,301 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preference Debugger</title>
-    
-    <style>
-        body { font-family: monospace; padding: 20px; background: #111; color: #0f0; }
-        .card { background: #222; padding: 30px; border: 1px solid #444; max-width: 600px; margin: 0 auto; }
-        h2 { color: #fff; margin-top: 0; }
-        
-        /* Email Status Box */
-        .email-display { 
-            background: #000; color: #fff; padding: 15px; 
-            border: 1px solid #666; margin: 20px 0; 
-            font-size: 18px; word-break: break-all; font-weight: bold;
-        }
+<script type="text/javascript">
+     // Updated Region to 'eu1' and Account ID to 'R57-875-KK7Z'
+     var clevertap = {event:[], profile:[], region:'eu1', account:[], onUserLogin:[], notifications:[]};
+     
+     // REPLACED ACCOUNT ID HERE
+     clevertap.account.push({"id": "R57-875-KK7Z"});
+     
+     (function () {
+		 var wzrk = document.createElement('script');
+		 wzrk.type = 'text/javascript';
+		 wzrk.async = true;
+         wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';		 
+         var s = document.getElementsByTagName('script')[0];
+		 s.parentNode.insertBefore(wzrk, s);
+      })();
+</script>
 
-        /* Buttons */
-        .btn { padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin: 5px 0; width: 100%; font-size: 14px; text-transform: uppercase; }
-        .btn-active { background-color: #00b894; color: black; }
-        .btn-inactive { background-color: #d63031; color: white; }
-        
-        /* Debug Console */
-        #console-box {
-            margin-top: 30px; text-align: left; background: #000; 
-            padding: 15px; height: 300px; overflow-y: scroll; 
-            border: 1px solid #444; font-size: 12px; color: #ccc;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        .log-row { margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
-        .log-err { color: #ff5555; font-weight: bold; }
-        .log-success { color: #55ff55; font-weight: bold; }
-        .log-warn { color: #ffa500; }
-    </style>
+<style>
+    .row {
+    display: flex;
+    align-items: center;
+    }
+     .manage-preferences {
+      color: rgba(18, 107, 255, 1);
+      text-decoration: none;
+      text-wrap: nowrap;
+    }
+    .manage-preferences:hover{
+      cursor: pointer;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 90px;
+      height: 40px;
+    }
 
-    <script type="text/javascript">
-         var clevertap = {event:[], profile:[], region:'in1', account:[], onUserLogin:[], notifications:[]};
-         // YOUR ACCOUNT ID
-         clevertap.account.push({"id": "R57-875-KK7Z"}); 
-         
-         (function () {
-             var wzrk = document.createElement('script');
-             wzrk.type = 'text/javascript';
-             wzrk.async = true;
-             wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';		 
-             var s = document.getElementsByTagName('script')[0];
-             s.parentNode.insertBefore(wzrk, s);
-         })();
-    </script>
-</head>
-<body>
+    .slider span {
+      display: inline-block;
+      width: 50%;
+      padding: 10px 5px 0 10px;
+      color: black;
+      font-size: 15px
+    }
 
-    <div class="card">
-        <h2>Unsubscribe Debugger</h2>
-        <p style="color: #999">Status of email detection:</p>
-        
-        <div id="user-email" class="email-display">Detecting...</div>
+    .slider {
+      display: flex;
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 8px;
+      -webkit-transition: .4s;
+      transition: .4s;
+      z-index: 1;
+    }
 
-        <div id="controls" style="display:none;">
-            <p style="color: #fff">Set 'premium user sub' property:</p>
-            <button class="btn btn-active" onclick="updateUserProp(true)">Set TRUE (Active)</button>
-            <button class="btn btn-inactive" onclick="updateUserProp(false)">Set FALSE (Inactive)</button>
-        </div>
-        
-        <div id="console-box"><div>> System Initialized... waiting for logic.</div></div>
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 40px;
+      width: 45px;
+      z-index: -1;
+      background-color: rgba(241, 242, 245, 1);
+    }
+
+    input:checked+.slider {
+      background-color: rgba(18, 107, 255, 1);
+    }
+
+    input+.slider {
+      background-color: rgba(18, 107, 255, 1);
+    }
+
+    input[type="checkbox"]:not(:checked)+.slider:before {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+      -webkit-transform: translateX(45px);
+      -ms-transform: translateX(45px);
+      transform: translateX(45px);
+      color: black;
+    }
+</style>
+
+<div id="handle-group-unsubscribe"> <div>
+      <h2>Unsubscribe from the following types of emails?</h2>
+    </div>
+    <div id="unsubscribe-groups"></div> <div id="sample-unsubscribe-groups">
+      <p>Newsletter</p>
+      <p>Product Updates</p>
     </div>
 
-    <script>
-        // --- LOGGER HELPER ---
-        function screenLog(msg, type) {
-            var box = document.getElementById('console-box');
-            var colorClass = type === 'error' ? 'log-err' : (type === 'success' ? 'log-success' : (type === 'warn' ? 'log-warn' : ''));
-            var timestamp = new Date().toLocaleTimeString();
-            box.innerHTML += `<div class="log-row ${colorClass}">[${timestamp}] ${msg}</div>`;
-            box.scrollTop = box.scrollHeight;
-            console.log(msg);
+    <p>
+      <span >To unsubscribe from all emails or receive only certain types of emails,</span> 
+      <a class="manage-preferences" onclick="managePreferenceLink()">Manage Email Preferences.</a>
+    </p>
+    <div>
+      <button onclick="changeSubscriptionGroups()">Unsubscribe</button>
+    </div>
+</div>
+
+<div id="handle-global-unsubscribe" style="display: none"> <div>
+      <h2>Manage Email Preferences</h2>
+      <p>
+        Choose the emails you would like to receive from us.
+      </p>
+    </div>
+    <hr />
+    <div id="unsubscribe-global-groups"></div><div id="sample-global-unsubscribe-groups">
+    <div class="row"><p>Newsletter</p><label class="switch"><input type="checkbox"><div class="slider"><span class="no">NO</span><span class="yes">YES</span></div></label></div>
+    <div class="row"><p>Product Updates</p><label class="switch"><input type="checkbox"><div class="slider"><span class="no">NO</span><span class="yes">YES</span></div></label></div>
+    </div>
+
+    <div>
+      <p>You will continue to receive non-promotional emails.
+        For example - Privacy policy and Outage updates.</p>
+    </div>
+    <div>
+      <button onclick="changeSubscriptionGroups()">Save Preferences</button>
+    </div>
+</div>
+
+<div id="action-btns" style="display: none"> <p>Unsubscribe from all future emails</p>
+      <button onclick="unsubscribeAll()">Unsubscribe All</button>
+    <p>Resubscribe to all email groups</p>
+      <button onclick="resubscribeAll()">Resubscribe All</button>
+</div>
+
+<div id="unsubscribe-operation-failed-message" style="display: none;">
+    <h2 id="error-message"></h2>
+    <div>
+      <ol>
+        <li>Check your internet connection</li>
+        <li>Disable ad-blockers if enabled</li>
+        <li>Enable Javascript on your browser, if disabled</li>
+      </ol>
+      <p>
+        If the issue persists, contact Customer Care
+      </p>
+    </div>
+</div>
+
+<script>
+function managePreferenceLink() {
+  document.querySelector("#handle-global-unsubscribe").style.display = 'block';
+  document.querySelector("#handle-group-unsubscribe").style.display = 'none';
+}
+</script>
+
+<script>
+  var isReEncode = false
+    window.onload = function() {
+        const withGroups = true
+        $WZRK_WR.getEmail(false, withGroups); // Fetch data such as the user's email address, subscription groups, campaign ID, and identity.
+    }
+
+    function wzrk_email_fetched(emailStr, profile) {
+        if (!profile || !profile.groups || profile.groups.length === 0) {
+            console.log("did not recv groups in callback");
         }
+        const subscriptionGroups = profile.groups; // extract subscription groups
+        $WZRK_WR.setSubscriptionGroups(subscriptionGroups);
+        $WZRK_WR.setUpdatedCategoryLong(profile);
 
-        // --- POLYFILL START ---
-        // We manually create $WZRK_WR to read the URL like the docs
-        window.$WZRK_WR = {
-            getEmail: function() {
-                screenLog("1. $WZRK_WR.getEmail() started.");
-                
-                var params = new URLSearchParams(window.location.search);
-                var rawE = params.get('e');
+        const divElement = document.createElement('DIV');
+        const campaignIdElement = document.createElement('SPAN');
+        campaignIdElement.innerHTML = "campaignid: " + profile.campaignId // extract campaignId
+        divElement.appendChild(campaignIdElement);
 
-                if (!rawE) {
-                    screenLog("ERROR: No 'e' parameter in URL.", 'error');
-                    document.getElementById("user-email").innerText = "NO LINK DATA";
-                    return;
-                }
+        const identityElement = document.createElement('SPAN');
+        identityElement.innerHTML = "identity: " + profile.identity // extract identity
+        divElement.appendChild(identityElement);
 
-                screenLog("2. Found 'e' param. Length: " + rawE.length);
+        const emailElement = document.createElement('SPAN');
+        emailElement.innerHTML = "email: " + emailStr // display email address
+        divElement.appendChild(emailElement);
 
-                try {
-                    // ATTEMPT DECODE
-                    var decoded = atob(rawE);
-                    screenLog("3. Base64 Decode Result: " + decoded.substring(0, 10) + "...");
+        const groupList = document.getElementById('handle-global-unsubscribe')
+        groupList.append(divElement)
 
-                    // CHECK IF ENCRYPTED (Garbage Check)
-                    if (decoded.includes("@")) {
-                        // Looks like a valid email!
-                        screenLog("SUCCESS: Valid email detected.", 'success');
-                        if (typeof wzrk_email_fetched === 'function') {
-                            wzrk_email_fetched(decoded);
-                        }
-                    } else {
-                        // It does NOT look like an email (likely starts with 'fmax' or garbage)
-                        screenLog("CRITICAL ERROR: Decoded text is NOT an email.", 'error');
-                        screenLog("REASON: 'Encrypt PII' is likely ENABLED in CleverTap Settings.", 'warn');
-                        screenLog("ACTION: Go to CT Dashboard > Settings > Email > Unsubscribe Page and UNCHECK 'Encrypt PII'.", 'warn');
-                        
-                        document.getElementById("user-email").innerText = "ENCRYPTION ERROR";
-                        document.getElementById("user-email").style.color = "red";
-                    }
+        displayGroups();//Sample function to display the subscription group details
+    }
 
-                } catch (e) {
-                    screenLog("CRITICAL: Decode failed completely. " + e.message, 'error');
-                }
+    function displayGroups() {
+        const subscriptionGroups = $WZRK_WR.getSubscriptionGroups(); // Retrieves the current subscription groups associated with a user's profile
+        const isGlobalUnsubscribe = $WZRK_WR.isGlobalUnsubscribe() // Determines if the page is for unsubscribing from campaign-speicifc groups or for displaying the Email Preference Center
+        const managePreferencesElement = document.querySelector('.manage-preferences')
+        if (!isGlobalUnsubscribe) {
+            managePreferencesElement.href = getManagePreferenceLink()
+            document.querySelector("#handle-global-unsubscribe").style.display = 'none';
+            document.querySelector("#handle-group-unsubscribe").style.display = 'block';
+            document.querySelector("#sample-unsubscribe-groups").style.display = 'none';
+
+            const groupList = document.getElementById('unsubscribe-groups')
+            for (let obj of subscriptionGroups) {
+                const groupNameElement = document.createElement("P");
+                groupNameElement.name = obj.name // extract name of subscription group
+                groupNameElement.description = obj.description // extract description of subscription group
+                groupNameElement.checked = false
+                groupNameElement.innerHTML = obj.name;
+                groupList.appendChild(groupNameElement)
             }
-        };
-
-        // --- MAIN LOGIC ---
-        window.onload = function() {
-            screenLog("0. Page Loaded.");
-            if (window.$WZRK_WR) {
-                $WZRK_WR.getEmail();
+        } else {
+            document.querySelector("#handle-global-unsubscribe").style.display = 'block';
+            document.querySelector("#handle-group-unsubscribe").style.display = 'none';
+            document.querySelector("#sample-global-unsubscribe-groups").style.display = 'none';
+            const addList = document.getElementById('unsubscribe-global-groups');
+            for (let obj of subscriptionGroups) {
+                const groupContainerElement = document.createElement("DIV");
+                const groupNameElement = document.createElement("P");
+                const checkBox = document.createElement("INPUT");
+                const isUnsubscribed = obj.isUnsubscribed // extract subscription status of subscription group
+                checkBox.setAttribute("type", "checkbox");
+                groupContainerElement.setAttribute("class", "unsubscribe-group-info")
+                checkBox.checked = !isUnsubscribed
+                checkBox.setAttribute("name", obj.name)
+                checkBox.setAttribute("id", obj.name)
+                checkBox.setAttribute("class", "ct-unsub-group-input-item");
+                const label = document.createElement("LABEL");
+                label.appendChild(checkBox);
+                label.appendChild(getSliderElement());
+                label.setAttribute("class", "switch");
+                groupNameElement.innerHTML = obj.name;
+                groupContainerElement.appendChild(groupNameElement);
+                groupContainerElement.appendChild(label);
+                addList.appendChild(groupContainerElement);
+                addList.appendChild(document.createElement('HR'))
             }
-        };
+        }
+    }
+    function changeSubscriptionGroups() {
+        let unsubcribeGroups = [];
+        const elements = document.getElementsByClassName("ct-unsub-group-input-item");
+        for (let i = 0;i < elements.length;i++) {
+        const element = elements[i];
+        if (element.name) {
+          const data = {
+            name: element.name,
+            isUnsubscribed: !element.checked
+          }
+          unsubcribeGroups.push(data)
+        }
+      }
+      $WZRK_WR.changeSubscriptionGroups(false, unsubcribeGroups); //updates group subscription preference of user
+    }
 
-        // The Callback
-        window.wzrk_email_fetched = function(emailStr) {
-            screenLog("4. Callback Triggered with: " + emailStr);
-            
-            // UI Update
-            document.getElementById("user-email").innerText = emailStr;
-            document.getElementById("controls").style.display = "block";
-            screenLog("5. UI Unlocked. Ready to update.", 'success');
+    function unsubscribeAll() {
+        $WZRK_WR.unSubEmail(isReEncode); //completely unsubscribes user from email communication
+    }
 
-            // Store globally for the button click
-            window.currentUserEmail = emailStr;
-        };
+    function resubscribeAll() {
+        resubscribeCalled = true
+        $WZRK_WR.subEmail(isReEncode); //resubscribes user for email communication
+    }
 
-        // Update Function
-        window.updateUserProp = function(val) {
-            if(!window.currentUserEmail) return;
+    function getManagePreferenceLink() {
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.set("page_type", "global");
+        return window.location.pathname + '?' + searchParams.toString();
+    }
 
-            screenLog("Action: Updating 'premium user sub' to " + val + "...", 'warn');
-            
-            clevertap.onUserLogin.push({
-                "Site": {
-                    "Identity": window.currentUserEmail,
-                    "premium user sub": val
-                }
-            });
+    function hideUnsubscribeOptions () {
+      document.querySelector('#handle-global-unsubscribe').style.display = 'none';
+      document.querySelector('#handle-group-unsubscribe').style.display = 'none';
+      document.querySelector('#action-btns').style.display = 'none';
+    }
 
-            screenLog("Success: Update Pushed to CleverTap.", 'success');
-            alert("Done! Updated to " + val);
-        };
-    </script>
+    function wzrk_email_subscription (status) {
+      alert("Successful")
+    }
 
-</body>
-</html>
+    function wzrk_email_fetched_failed (error) {
+      hideUnsubscribeOptions()
+      document.querySelector('#unsubscribe-operation-failed-message').style.display = 'block';
+      const errorMsg = 'We could not retrieve your email address';
+      document.querySelector('#error-message').innerHTML = errorMsg;
+    }
+    function wzrk_email_subscription_failed (error) {
+      hideUnsubscribeOptions()
+      document.querySelector('#unsubscribe-operation-failed-message').style.display = 'block';
+      const errorMsg = 'Failed to save your preferences';
+      document.querySelector('#error-message').innerHTML = errorMsg;
+    }
+
+    // Helper function missing in original snippet but required for sliders
+    function getSliderElement() {
+        var div = document.createElement('div');
+        div.className = 'slider';
+        var no = document.createElement('span');
+        no.className = 'no';
+        no.innerText = 'NO';
+        var yes = document.createElement('span');
+        yes.className = 'yes';
+        yes.innerText = 'YES';
+        div.appendChild(no);
+        div.appendChild(yes);
+        return div;
+    }
+</script>
