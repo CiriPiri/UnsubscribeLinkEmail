@@ -3,33 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Preferences</title>
+    <title>Preference Debugger</title>
     
     <style>
-        body { font-family: sans-serif; padding: 40px; display: flex; justify-content: center; background: #f4f6f8; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; width: 100%; text-align: center; }
-        h2 { margin-top: 0; color: #333; }
-        p { color: #666; }
+        body { font-family: monospace; padding: 20px; background: #111; color: #0f0; }
+        .card { background: #222; padding: 30px; border: 1px solid #444; max-width: 600px; margin: 0 auto; }
+        h2 { color: #fff; margin-top: 0; }
         
+        /* Email Status Box */
         .email-display { 
-            background: #eef; color: #333; padding: 8px 12px; 
-            border-radius: 4px; font-weight: bold; margin: 10px 0 20px 0; 
-            display: inline-block; word-break: break-all;
+            background: #000; color: #fff; padding: 15px; 
+            border: 1px solid #666; margin: 20px 0; 
+            font-size: 18px; word-break: break-all; font-weight: bold;
         }
 
-        .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 5px; width: 45%; color: white;}
-        .btn-active { background-color: #28a745; }
-        .btn-inactive { background-color: #dc3545; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        #error-message { color: red; display: none; margin-top: 10px; }
-        #success-message { color: green; display: none; margin-top: 10px; font-weight: bold; }
+        /* Buttons */
+        .btn { padding: 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin: 5px 0; width: 100%; font-size: 14px; text-transform: uppercase; }
+        .btn-active { background-color: #00b894; color: black; }
+        .btn-inactive { background-color: #d63031; color: white; }
+        
+        /* Debug Console */
+        #console-box {
+            margin-top: 30px; text-align: left; background: #000; 
+            padding: 15px; height: 300px; overflow-y: scroll; 
+            border: 1px solid #444; font-size: 12px; color: #ccc;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .log-row { margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+        .log-err { color: #ff5555; font-weight: bold; }
+        .log-success { color: #55ff55; font-weight: bold; }
+        .log-warn { color: #ffa500; }
     </style>
 
     <script type="text/javascript">
          var clevertap = {event:[], profile:[], region:'in1', account:[], onUserLogin:[], notifications:[]};
-         
-         // !!! REPLACE WITH YOUR ACCOUNT ID !!!
+         // YOUR ACCOUNT ID
          clevertap.account.push({"id": "R57-875-KK7Z"}); 
          
          (function () {
@@ -41,95 +49,117 @@
              s.parentNode.insertBefore(wzrk, s);
          })();
     </script>
-
-    <script>
-        if (typeof window.$WZRK_WR === 'undefined') {
-            window.$WZRK_WR = {
-                getEmail: function() {
-                    var params = new URLSearchParams(window.location.search);
-                    if (params.get('e')) {
-                        // Decode the 'e' parameter
-                        var decoded = atob(params.get('e'));
-                        // Call the callback function immediately
-                        if (typeof wzrk_email_fetched === 'function') {
-                            wzrk_email_fetched(decoded);
-                        }
-                    } else if (params.get('email')) {
-                        // Fallback for plain text
-                        if (typeof wzrk_email_fetched === 'function') {
-                            wzrk_email_fetched(params.get('email'));
-                        }
-                    } else {
-                        console.warn("No email found in URL");
-                    }
-                }
-            };
-        }
-    </script>
 </head>
 <body>
 
     <div class="card">
-        <h2>User Preferences</h2>
-        <p>Managing settings for:</p>
+        <h2>Unsubscribe Debugger</h2>
+        <p style="color: #999">Status of email detection:</p>
         
         <div id="user-email" class="email-display">Detecting...</div>
 
         <div id="controls" style="display:none;">
-            <p>Update your status:</p>
-            <button class="btn btn-active" onclick="updateUserProp(true)">Set Active</button>
-            <button class="btn btn-inactive" onclick="updateUserProp(false)">Set Inactive</button>
+            <p style="color: #fff">Set 'premium user sub' property:</p>
+            <button class="btn btn-active" onclick="updateUserProp(true)">Set TRUE (Active)</button>
+            <button class="btn btn-inactive" onclick="updateUserProp(false)">Set FALSE (Inactive)</button>
         </div>
-
-        <div id="success-message">Settings Updated!</div>
-        <div id="error-message">Could not detect user email. Please use the link from your inbox.</div>
+        
+        <div id="console-box"><div>> System Initialized... waiting for logic.</div></div>
     </div>
 
     <script>
-        var currentEmail = null;
+        // --- LOGGER HELPER ---
+        function screenLog(msg, type) {
+            var box = document.getElementById('console-box');
+            var colorClass = type === 'error' ? 'log-err' : (type === 'success' ? 'log-success' : (type === 'warn' ? 'log-warn' : ''));
+            var timestamp = new Date().toLocaleTimeString();
+            box.innerHTML += `<div class="log-row ${colorClass}">[${timestamp}] ${msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+            console.log(msg);
+        }
 
-        // A. ONLOAD: Grab the email using the method you requested
-        window.onload = function() {
-            // We pass 'false' for re-encode, and removed 'withGroups' since you don't want them
-            if (window.$WZRK_WR && window.$WZRK_WR.getEmail) {
-                $WZRK_WR.getEmail(false); 
+        // --- POLYFILL START ---
+        // We manually create $WZRK_WR to read the URL like the docs
+        window.$WZRK_WR = {
+            getEmail: function() {
+                screenLog("1. $WZRK_WR.getEmail() started.");
+                
+                var params = new URLSearchParams(window.location.search);
+                var rawE = params.get('e');
+
+                if (!rawE) {
+                    screenLog("ERROR: No 'e' parameter in URL.", 'error');
+                    document.getElementById("user-email").innerText = "NO LINK DATA";
+                    return;
+                }
+
+                screenLog("2. Found 'e' param. Length: " + rawE.length);
+
+                try {
+                    // ATTEMPT DECODE
+                    var decoded = atob(rawE);
+                    screenLog("3. Base64 Decode Result: " + decoded.substring(0, 10) + "...");
+
+                    // CHECK IF ENCRYPTED (Garbage Check)
+                    if (decoded.includes("@")) {
+                        // Looks like a valid email!
+                        screenLog("SUCCESS: Valid email detected.", 'success');
+                        if (typeof wzrk_email_fetched === 'function') {
+                            wzrk_email_fetched(decoded);
+                        }
+                    } else {
+                        // It does NOT look like an email (likely starts with 'fmax' or garbage)
+                        screenLog("CRITICAL ERROR: Decoded text is NOT an email.", 'error');
+                        screenLog("REASON: 'Encrypt PII' is likely ENABLED in CleverTap Settings.", 'warn');
+                        screenLog("ACTION: Go to CT Dashboard > Settings > Email > Unsubscribe Page and UNCHECK 'Encrypt PII'.", 'warn');
+                        
+                        document.getElementById("user-email").innerText = "ENCRYPTION ERROR";
+                        document.getElementById("user-email").style.color = "red";
+                    }
+
+                } catch (e) {
+                    screenLog("CRITICAL: Decode failed completely. " + e.message, 'error');
+                }
             }
         };
 
-        // B. CALLBACK: This runs automatically when email is fetched
-        function wzrk_email_fetched(emailStr) {
-            console.log("Email grabbed:", emailStr);
-            
-            if (emailStr) {
-                currentEmail = emailStr;
-                document.getElementById("user-email").innerText = emailStr;
-                document.getElementById("controls").style.display = "block";
-            } else {
-                document.getElementById("error-message").style.display = "block";
-                document.getElementById("user-email").innerText = "Unknown";
+        // --- MAIN LOGIC ---
+        window.onload = function() {
+            screenLog("0. Page Loaded.");
+            if (window.$WZRK_WR) {
+                $WZRK_WR.getEmail();
             }
-        }
+        };
 
-        // C. UPDATE ACTION: Strictly updates user property, no events
-        function updateUserProp(value) {
-            if (!currentEmail) return;
+        // The Callback
+        window.wzrk_email_fetched = function(emailStr) {
+            screenLog("4. Callback Triggered with: " + emailStr);
+            
+            // UI Update
+            document.getElementById("user-email").innerText = emailStr;
+            document.getElementById("controls").style.display = "block";
+            screenLog("5. UI Unlocked. Ready to update.", 'success');
 
-            // Pushing to Profile via onUserLogin (safest for custom pages)
+            // Store globally for the button click
+            window.currentUserEmail = emailStr;
+        };
+
+        // Update Function
+        window.updateUserProp = function(val) {
+            if(!window.currentUserEmail) return;
+
+            screenLog("Action: Updating 'premium user sub' to " + val + "...", 'warn');
+            
             clevertap.onUserLogin.push({
                 "Site": {
-                    "Identity": currentEmail,   // Identify User
-                    "premium user sub": value   // Update ONLY this property
+                    "Identity": window.currentUserEmail,
+                    "premium user sub": val
                 }
             });
 
-            // UI Feedback
-            document.getElementById("success-message").style.display = "block";
-            
-            // Optional: Hide success msg after 2 seconds
-            setTimeout(function() {
-                document.getElementById("success-message").style.display = "none";
-            }, 3000);
-        }
+            screenLog("Success: Update Pushed to CleverTap.", 'success');
+            alert("Done! Updated to " + val);
+        };
     </script>
 
 </body>
