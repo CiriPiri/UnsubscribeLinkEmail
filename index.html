@@ -3,49 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unsubscribe</title>
+    <title>Manage Preferences</title>
     <style>
-        /* Modern UI Styles */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
-        h1 { font-size: 22px; color: #333; margin-bottom: 10px; }
-        p { color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 25px; }
-        .email-badge { background: #eef2f5; padding: 5px 10px; border-radius: 4px; font-weight: 600; color: #333; display: inline-block; margin-bottom: 20px; font-size: 13px; word-break: break-all;}
-        .btn { background: #000; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn:hover { opacity: 0.8; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
-        #status { margin-top: 15px; font-size: 13px; min-height: 18px; }
-        .error { color: #d93025; }
-        .success { color: #188038; }
+        /* --- 1. MODERN UI CSS --- */
+        :root { --primary: #000; --bg: #f5f7fa; --surface: #ffffff; --text: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        
+        /* Main Card */
+        .card { background: var(--surface); width: 100%; max-width: 420px; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; }
+        h1 { font-size: 24px; font-weight: 700; color: var(--text); margin: 0 0 10px 0; }
+        p { color: #666; font-size: 15px; line-height: 1.5; margin-bottom: 30px; }
+        
+        /* Email Input / Display */
+        .email-box { background: #f0f2f5; padding: 12px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #e1e4e8; text-align: left; }
+        .email-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; display: block; margin-bottom: 4px; font-weight: 600; }
+        .email-value { font-family: monospace; font-size: 16px; color: #333; word-break: break-all; font-weight: 600; }
+        
+        /* Editable Input (Fallback) */
+        input#manual-email { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; display: none; box-sizing: border-box; }
+
+        /* Button */
+        .btn { background-color: var(--primary); color: white; border: none; padding: 16px; border-radius: 8px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* Status & Logs */
+        .status-msg { margin-top: 20px; font-weight: 500; min-height: 24px; }
+        .success { color: #008a00; }
+        .error { color: #e60000; }
+
+        /* ON-SCREEN DEBUGGER */
+        #debug-panel { margin-top: 40px; width: 100%; max-width: 600px; background: #222; color: #0f0; padding: 20px; border-radius: 8px; font-family: "Courier New", monospace; font-size: 12px; height: 200px; overflow-y: scroll; text-align: left; border: 1px solid #444; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .log-time { color: #888; margin-right: 8px; }
     </style>
 
     <script type="text/javascript">
-        // We manually create the $WZRK_WR object so you can use it on Vercel
-        window.$WZRK_WR = {
-            // The method you requested
-            getEmail: function(reEncode) {
-                var urlParams = new URLSearchParams(window.location.search);
-                var encodedEmail = urlParams.get('e');
-                
-                if (!encodedEmail) return null;
-
-                try {
-                    // Standard Base64 Decode
-                    // If reEncode is true, some legacy setups decode twice, but usually once is enough for standard campaigns
-                    return decodeURIComponent(escape(window.atob(encodedEmail)));
-                } catch (e) {
-                    console.error("WZRK: Could not decode email", e);
-                    return null;
-                }
-            }
-        };
-    </script>
-
-    <script type="text/javascript">
         var clevertap = {event:[], profile:[], account:[], onUserLogin:[], notifications:[], region:'eu1'};
-        // YOUR ACCOUNT ID
-        clevertap.account.push({"id": "R57-875-KK7Z"}); 
-        
+        clevertap.account.push({"id": "R57-875-KK7Z"});
         (function () {
             var wzrk = document.createElement('script');
             wzrk.type = 'text/javascript';
@@ -60,84 +55,156 @@
 
     <div class="card">
         <h1>Unsubscribe</h1>
+        <p>We're sorry to see you go. Confirm your email below to stop receiving updates.</p>
         
-        <div id="email-container" style="display:none;">
-            <div class="email-badge" id="user-email-display">Loading...</div>
+        <div class="email-box">
+            <span class="email-label">Managing Preferences For:</span>
+            
+            <div id="display-email" class="email-value">Detecting...</div>
+            
+            <input type="email" id="manual-email" placeholder="Enter your email address" />
         </div>
 
-        <p>Manage your email preferences below.</p>
-
-        <button id="unsubBtn" class="btn" onclick="processUnsubscribe()">
+        <button id="actionBtn" class="btn" onclick="performUpdate()">
             Unsubscribe Me
         </button>
 
-        <div id="status"></div>
+        <div id="ui-status" class="status-msg"></div>
+    </div>
+
+    <div id="debug-panel">
+        <div class="log-entry">--- DEBUG LOGS INITIALIZED ---</div>
     </div>
 
     <script>
-        // --- 3. EXECUTION LOGIC ---
-        
-        // A. USE THE WZRK METHOD TO GET EMAIL
-        // We pass 'false' because standard CT links are single-encoded
-        var targetEmail = window.$WZRK_WR.getEmail(false);
-
-        // B. SETUP UI
-        var btn = document.getElementById('unsubBtn');
-        var statusDiv = document.getElementById('status');
-        var emailDisplay = document.getElementById('user-email-display');
-
-        if (targetEmail) {
-            emailDisplay.innerText = targetEmail;
-            document.getElementById('email-container').style.display = 'block';
-            console.log("WZRK: Email extracted successfully:", targetEmail);
-        } else {
-            // Fallback: Check if they used the plain 'email' param or if decoding failed
-            console.warn("WZRK: No email found in 'e' parameter.");
-            var urlParams = new URLSearchParams(window.location.search);
-            if(urlParams.get('email')) {
-                targetEmail = urlParams.get('email'); // Fallback to plain text
-                emailDisplay.innerText = targetEmail;
-                document.getElementById('email-container').style.display = 'block';
-            } else {
-                statusDiv.innerText = "Error: Invalid link. Please open from email.";
-                statusDiv.className = "error";
-                btn.disabled = true;
-            }
+        // --- 1. SUPER LOGGER (Prints to Screen) ---
+        function log(msg, data) {
+            var time = new Date().toLocaleTimeString();
+            var panel = document.getElementById('debug-panel');
+            var line = document.createElement('div');
+            line.className = 'log-entry';
+            
+            // Format data if present
+            var dataStr = data ? " | " + JSON.stringify(data) : "";
+            line.innerHTML = `<span class="log-time">[${time}]</span> ${msg} ${dataStr}`;
+            
+            panel.appendChild(line);
+            panel.scrollTop = panel.scrollHeight; // Auto scroll
+            console.log(msg, data || ""); // Also log to real console
         }
 
-        // C. UNSUBSCRIBE ACTION
-        function processUnsubscribe() {
-            if (!targetEmail) return;
+        // --- 2. INTELLIGENT DECODER ---
+        function getIdentity() {
+            var params = new URLSearchParams(window.location.search);
+            var email = null;
 
+            log("Checking URL Parameters...", window.location.search);
+
+            // Priority 1: Plain 'email' param (Best)
+            if (params.get('email')) {
+                log("Found plain text 'email' param.");
+                return params.get('email');
+            }
+
+            // Priority 2: Encoded 'e' param (Standard CT)
+            if (params.get('e')) {
+                var rawE = params.get('e');
+                log("Found 'e' param. Attempting decode...", rawE);
+                
+                try {
+                    // Attempt Standard Base64 Decode
+                    var decoded = atob(rawE); 
+                    log("Decoded value result:", decoded);
+
+                    // VALIDATION: Does it look like an email? (@ symbol)
+                    if (decoded.includes("@")) {
+                        return decoded;
+                    } else {
+                        log("WARNING: Decoded value does not look like an email. Likely PII Encrypted.");
+                        return null; // Return null to trigger manual input
+                    }
+                } catch (err) {
+                    log("ERROR: Base64 decode failed.", err.message);
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // --- 3. INIT LOGIC ---
+        var targetEmail = getIdentity();
+        var emailDisplay = document.getElementById('display-email');
+        var manualInput = document.getElementById('manual-email');
+        var btn = document.getElementById('actionBtn');
+
+        if (targetEmail) {
+            // Success: We found a valid email
+            emailDisplay.innerText = targetEmail;
+            log("Target Identity set to:", targetEmail);
+        } else {
+            // Failure: We got garbage or nothing
+            log("Could not auto-detect valid email. Switching to Manual Input.");
+            emailDisplay.style.display = 'none';
+            manualInput.style.display = 'block';
+            
+            // Fill the garbage text into input just in case they want to see it, 
+            // but rely on them fixing it.
+            var params = new URLSearchParams(window.location.search);
+            if(params.get('e')) manualInput.value = ""; // Keep empty for user to type
+        }
+
+        // --- 4. ACTION LOGIC ---
+        function performUpdate() {
+            // 1. Get final email (either from auto-detect or manual input)
+            var finalEmail = targetEmail || manualInput.value;
+
+            if (!finalEmail || !finalEmail.includes("@")) {
+                log("Validation Failed: Invalid Email", finalEmail);
+                document.getElementById('ui-status').innerText = "Please enter a valid email.";
+                document.getElementById('ui-status').className = "error";
+                return;
+            }
+
+            log("Starting Unsubscribe Process for:", finalEmail);
             btn.disabled = true;
             btn.innerText = "Processing...";
 
-            // 1. PUSH TO CLEVERTAP (The "All Objects" approach)
-            clevertap.onUserLogin.push({
-                "Site": {
-                    "Identity": targetEmail,    // Primary identifier
-                    "Email": targetEmail,       // Update Email field
-                    
-                    // The Preferences
-                    "MSG-email": false,         // Global Unsubscribe
-                    "premium user sub": false   // Custom flag
-                }
-            });
+            try {
+                // 2. CLEVERTAP PUSH
+                // We use onUserLogin to ensure we target THIS user
+                var payload = {
+                    "Site": {
+                        "Identity": finalEmail,
+                        "Email": finalEmail,
+                        "MSG-email": false,         // The Unsubscribe
+                        "premium user sub": false   // Your custom flag
+                    }
+                };
 
-            // 2. LOG EVENT
-            clevertap.event.push("Unsubscribe Action", {
-                "Method": "WZRK_WR Custom Page",
-                "Status": "Success"
-            });
+                log("Pushing to CleverTap SDK...", payload);
+                clevertap.onUserLogin.push(payload);
 
-            // 3. UI FEEDBACK
-            setTimeout(function() {
-                btn.innerText = "Unsubscribed";
-                statusDiv.innerText = "Success! Preference updated.";
-                statusDiv.className = "success";
-            }, 1000);
+                // 3. EVENT PUSH (Verification)
+                clevertap.event.push("Unsubscribe Custom Page", {
+                    "Status": "Success",
+                    "Input Method": targetEmail ? "Auto-Link" : "Manual-Input"
+                });
+                log("Event 'Unsubscribe Custom Page' pushed.");
+
+                // 4. SUCCESS UI
+                setTimeout(function() {
+                    btn.innerText = "Done";
+                    document.getElementById('ui-status').innerText = "Success! " + finalEmail + " has been unsubscribed.";
+                    document.getElementById('ui-status').className = "success status-msg";
+                    log("Process Finished Successfully.");
+                }, 1500);
+
+            } catch (e) {
+                log("CRITICAL ERROR during CT push:", e);
+                btn.disabled = false;
+                btn.innerText = "Try Again";
+            }
         }
     </script>
-
 </body>
 </html>
