@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unsubscribe Preferences</title>
+    <style>
+      /* Modern Reset & Base Styles */
+      :root {
+        --primary: #222;
+        --accent: #d32f2f; /* Red for unsubscribe actions usually implies caution/finality */
+        --bg: #f8f9fa;
+        --surface: #ffffff;
+        --text-main: #2d3436;
+        --text-sub: #636e72;
+        --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+        --radius: 16px;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background-color: var(--bg);
+        background-image: radial-gradient(#e1e1e1 1px, transparent 1px);
+        background-size: 20px 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .container {
+        background: var(--surface);
+        padding: 48px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        max-width: 420px;
+        width: 100%;
+        text-align: center;
+        transition: transform 0.2s ease;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0 0 12px 0;
+        letter-spacing: -0.5px;
+      }
+
+      p {
+        color: var(--text-sub);
+        font-size: 15px;
+        line-height: 1.5;
+        margin-bottom: 32px;
+      }
+
+      /* Identity Badge */
+      .user-badge {
+        background: #f1f3f5;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        display: inline-block;
+        margin-bottom: 24px;
+        border: 1px solid #dee2e6;
+      }
+
+      /* Button Styling */
+      .btn {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 16px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn:disabled {
+        background-color: #b2bec3;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* Status Messages */
+      #status-msg {
+        margin-top: 24px;
+        font-size: 14px;
+        font-weight: 500;
+        min-height: 20px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .success {
+        color: #00b894;
+      }
+      .error {
+        color: #d63031;
+      }
+
+      /* Spinner */
+      .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <script type="text/javascript">
+      // --- CLEVERTAP INIT ---
+      var clevertap = {
+        event: [],
+        profile: [],
+        account: [],
+        onUserLogin: [],
+        notifications: [],
+        region: "eu1",
+      }; // Updated Region
+
+      // Updated Account ID
+      clevertap.account.push({ id: "R57-875-KK7Z" });
+
+      (function () {
+        var wzrk = document.createElement("script");
+        wzrk.type = "text/javascript";
+        wzrk.async = true;
+        wzrk.src = "https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(wzrk, s);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Email Preferences</h1>
+
+      <div id="identity-container" style="display: none">
+        <span class="user-badge" id="user-identity-display"></span>
+      </div>
+
+      <p id="main-text">
+        Click the button below to confirm that you would like to stop receiving
+        marketing emails.
+      </p>
+
+      <button id="updateBtn" class="btn" onclick="performUnsubscribe()">
+        <span id="btn-text">Unsubscribe Me</span>
+        <div class="spinner" id="btn-spinner"></div>
+      </button>
+
+      <div id="status-msg"></div>
+    </div>
+
+    <script type="text/javascript">
+      // --- 1. UTILITY: EXTRACT EMAIL FROM URL ---
+      // In production, your email link should look like: https://yoursite.com/unsubscribe?email=user@test.com
+      function getQueryParam(param) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
+      // Try to get 'email' or 'identity' or 'id' from URL
+      var currentIdentity =
+        getQueryParam("email") ||
+        getQueryParam("identity") ||
+        getQueryParam("id");
+      var btn = document.getElementById("updateBtn");
+      var statusDiv = document.getElementById("status-msg");
+
+      // --- 2. INITIALIZATION CHECK ---
+      if (currentIdentity) {
+        // Valid identity found in URL
+        document.getElementById("user-identity-display").innerText =
+          currentIdentity;
+        document.getElementById("identity-container").style.display = "block";
+        console.log("[Setup] Target Identity found:", currentIdentity);
+      } else {
+        // No identity found - Disable button or Handle Fallback
+        console.warn("[Setup] No identity found in URL parameters.");
+        // Optional: You could enable an input field here if URL param is missing
+        document.getElementById("main-text").innerText =
+          "Error: No user specified. Please follow the link directly from your email.";
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+      }
+
+      // --- 3. THE ACTION ---
+      function performUnsubscribe() {
+        if (!currentIdentity) {
+          showStatus("Error: Missing user identity.", "error");
+          return;
+        }
+
+        // UI Loading State
+        btn.disabled = true;
+        document.getElementById("btn-text").style.display = "none";
+        document.getElementById("btn-spinner").style.display = "block";
+
+        console.log("[Action] Processing unsubscribe for:", currentIdentity);
+
+        try {
+          // Pushing to CleverTap
+          // Using onUserLogin to ensure we target the specific user, even if they are 'anonymous' on this device currently
+          clevertap.onUserLogin.push({
+            Site: {
+              Identity: currentIdentity, // Primary Key
+              Email: currentIdentity, // Ensure Email prop matches
+
+              // UNSUBSCRIBE FLAGS
+              "MSG-email": false, // Standard Global Unsubscribe
+              "premium user sub": false, // Your custom flag
+            },
+          });
+
+          // Optional: Track the event for analytics
+          clevertap.event.push("Unsubscribe Page Action", {
+            Status: "Success",
+            Method: "Web Preference Page",
+          });
+
+          console.log("[CleverTap] onUserLogin push sent successfully.");
+
+          // Fake delay to ensure UI feels responsive (API is async anyway)
+          setTimeout(function () {
+            showStatus("You have been successfully unsubscribed.", "success");
+            btn.innerText = "Preferences Updated";
+            document.getElementById("btn-spinner").style.display = "none";
+            document.getElementById("btn-text").style.display = "inline";
+          }, 1000);
+        } catch (e) {
+          console.error("[Error] CleverTap Push Failed:", e);
+          showStatus("Something went wrong. Please try again.", "error");
+          btn.disabled = false;
+          document.getElementById("btn-spinner").style.display = "none";
+          document.getElementById("btn-text").style.display = "inline";
+        }
+      }
+
+      function showStatus(msg, type) {
+        statusDiv.innerText = msg;
+        statusDiv.className = type;
+        statusDiv.style.opacity = "1";
+      }
+    </script>
+  </body>
+</html>
